@@ -278,7 +278,7 @@
       var pass = document.getElementById("password").value.trim();
       var found = users.find(function(u) { return u.username === user && u.password === pass; });
       if (found) {
-        showMessage("✅  Welcome, " + user + "! Redirecting…", "success");
+        showMessage("✅  Welcome, " + user + "!", "success");
         ["loginBtn","username","password"].forEach(function(id){ document.getElementById(id).disabled = true; });
       } else {
         attempts++;
