@@ -134,9 +134,25 @@
       pointer-events: none;
       transition: opacity 0.2s;
     }
+    .btn-eye {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0.4;
+      padding: 4px;
+      line-height: 1;
+      transition: opacity 0.2s;
+      user-select: none;
+    }
+    .btn-eye:hover { opacity: 0.75; }
     .input-wrap input {
       width: 100%;
-      padding: 13px 16px 13px 44px;
+      padding: 13px 44px 13px 44px;
       background: rgba(255,255,255,0.8);
       border: 1.5px solid var(--border);
       border-radius: 12px;
@@ -183,6 +199,30 @@
     }
     .btn-login:active:not(:disabled) { transform: translateY(0); }
     .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-switch {
+      width: 100%;
+      padding: 13px;
+      margin-top: 10px;
+      background: transparent;
+      color: var(--green-dark);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1.5px solid rgba(46,125,50,0.35);
+      border-radius: 12px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      display: none;
+    }
+    .btn-switch:hover {
+      background: rgba(46,125,50,0.07);
+      border-color: var(--green-mid);
+      transform: translateY(-1px);
+    }
+    .btn-switch:active { transform: translateY(0); }
+
     #message {
       margin-top: 16px;
       padding: 12px 16px;
@@ -209,15 +249,14 @@
       transition: background 0.3s, transform 0.2s;
     }
     .dot.used { background: #ef9a9a; border-color: #e57373; transform: scale(1.2); }
-    .card-footer {
-      margin-top: 28px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(46,125,50,0.1);
-      text-align: center;
-      font-size: 12px;
-      color: var(--text-light);
+
+    @keyframes resetPop {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .card-footer strong { color: var(--green-dark); }
+    .reset-anim {
+      animation: resetPop 0.45s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
   </style>
 </head>
 <body>
@@ -226,12 +265,12 @@
   <div class="leaf leaf-3">🌱</div>
   <div class="leaf leaf-4">🍀</div>
 
-  <div class="card">
+  <div class="card" id="card">
     <div class="card-accent"></div>
-  <div class="top-section">
-    <div class="avatar-ring">🎓</div>
-    <div class="portal-badge">Student Portal</div>
-  </div>
+    <div class="top-section">
+      <div class="avatar-ring">🎓</div>
+      <div class="portal-badge">Student Portal</div>
+    </div>
     <div class="card-header">
       <h1>Welcome Back</h1>
       <p>Login to access your student account</p>
@@ -250,26 +289,27 @@
       <div class="input-wrap">
         <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
         <span class="ico">🔒</span>
+        <button type="button" class="btn-eye" id="eyeBtn" onclick="togglePassword()" title="Show/hide password">👁️</button>
       </div>
     </div>
 
     <button class="btn-login" id="loginBtn" onclick="login()">Login</button>
+    <button class="btn-switch" id="switchBtn" onclick="switchAccount()">🔄 Switch Account</button>
+
     <p id="message"></p>
     <div class="dots-row" id="dotsBar">
       <div class="dot" id="d1"></div>
       <div class="dot" id="d2"></div>
       <div class="dot" id="d3"></div>
     </div>
-
-
   </div>
 
   <script>
     var users = [
-      { username: "Cristel Marie",   password: "2003" },
-      { username: "admin",   password: "1234" },
-      { username: "student1",  password: "1111" },
-      { username: "student2",  password: "2222" }
+      { username: "Cristel Marie", password: "2003" },
+      { username: "admin",         password: "1234" },
+      { username: "student1",      password: "1111" },
+      { username: "student2",      password: "2222" }
     ];
     var maxAttempts = 3, attempts = 0, locked = false;
 
@@ -281,6 +321,7 @@
       if (found) {
         showMessage("✅  Welcome, " + user + "!", "success");
         ["loginBtn","username","password"].forEach(function(id){ document.getElementById(id).disabled = true; });
+        document.getElementById("switchBtn").style.display = "block";
       } else {
         attempts++;
         var dot = document.getElementById("d" + attempts);
@@ -289,16 +330,70 @@
           locked = true;
           showMessage("🔒  Account locked. Too many failed attempts.", "locked");
           ["loginBtn","username","password"].forEach(function(id){ document.getElementById(id).disabled = true; });
+          document.getElementById("switchBtn").style.display = "block";
         } else {
           var left = maxAttempts - attempts;
           showMessage("❌  Invalid credentials. " + left + " attempt" + (left > 1 ? "s" : "") + " remaining.", "error");
         }
       }
     }
+
+    function togglePassword() {
+      var input = document.getElementById("password");
+      var btn = document.getElementById("eyeBtn");
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+        btn.style.opacity = "0.7";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+        btn.style.opacity = "0.4";
+      }
+    }
+
+    function switchAccount() {
+      attempts = 0;
+      locked = false;
+
+      ["loginBtn","username","password"].forEach(function(id){
+        var el = document.getElementById(id);
+        el.disabled = false;
+        if (el.tagName === "INPUT") el.value = "";
+      });
+
+      var msg = document.getElementById("message");
+      msg.className = "";
+      msg.style.display = "none";
+      msg.innerHTML = "";
+
+      document.getElementById("switchBtn").style.display = "none";
+
+      var passInput = document.getElementById("password");
+      passInput.type = "password";
+      var eyeBtn = document.getElementById("eyeBtn");
+      eyeBtn.textContent = "👁️";
+      eyeBtn.style.opacity = "0.4";
+
+      ["d1","d2","d3"].forEach(function(id){
+        document.getElementById(id).classList.remove("used");
+      });
+
+      var card = document.getElementById("card");
+      card.classList.remove("reset-anim");
+      void card.offsetWidth;
+      card.classList.add("reset-anim");
+
+      document.getElementById("username").focus();
+    }
+
     function showMessage(text, type) {
       var el = document.getElementById("message");
-      el.className = type; el.innerHTML = text;
+      el.className = type;
+      el.style.display = "";
+      el.innerHTML = text;
     }
+
     document.addEventListener("keydown", function(e) { if (e.key === "Enter") login(); });
   </script>
 </body>
